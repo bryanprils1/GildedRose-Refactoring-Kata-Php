@@ -17,4 +17,11 @@ class GildedRoseTest extends TestCase
         $gildedRose->updateQuality();
         $this->assertSame('foo', $items[0]->name);
     }
+    
+    public function testConjuredDegradesTwiceAsFast():void
+    {
+        $items = [new Item('Conjured Mana Cake', 3, 6)];
+        (new GildedRose($items))->updateQuality();
+        $this->assertSame(4, $items[0]->quality);
+    }
 }
