@@ -6,6 +6,9 @@ namespace GildedRose;
 
 final class GildedRose
 {
+    
+    private const MAX_QUALITY = 50;
+    
     /**
      * @param  Item[]  $items
      */
@@ -20,45 +23,34 @@ final class GildedRose
             if ($item->name === 'Sulfuras, Hand of Ragnaros') {
                 continue;
             }
-            if ($item->name != 'Aged Brie' and $item->name != 'Backstage passes to a TAFKAL80ETC concert') {
-                if ($item->quality > 0) {
-                    $item->quality = $item->quality - 1;
-                }
-            } else {
-                if ($item->quality < 50) {
-                    $item->quality = $item->quality + 1;
-                    if ($item->name == 'Backstage passes to a TAFKAL80ETC concert') {
-                        if ($item->sellIn < 11) {
-                            if ($item->quality < 50) {
-                                $item->quality = $item->quality + 1;
-                            }
-                        }
-                        if ($item->sellIn < 6) {
-                            if ($item->quality < 50) {
-                                $item->quality = $item->quality + 1;
-                            }
-                        }
-                    }
-                }
+            
+            $expired = $item->sellIn <= 0;
+            
+            if ($item->name === 'Aged Brie') {
+                $item->quality = min(self::MAX_QUALITY, $item->quality + ($expired ? 2 : 1));
+                $item->sellIn = $item->sellIn - 1;
+                continue;
             }
             
-            $item->sellIn = $item->sellIn - 1;
-            
-            if ($item->sellIn < 0) {
-                if ($item->name != 'Aged Brie') {
-                    if ($item->name != 'Backstage passes to a TAFKAL80ETC concert') {
-                        if ($item->quality > 0) {
-                            $item->quality = $item->quality - 1;
-                        }
-                    } else {
-                        $item->quality = $item->quality - $item->quality;
-                    }
-                } else {
-                    if ($item->quality < 50) {
-                        $item->quality = $item->quality + 1;
-                    }
-                }
+            if ($item->name === 'Backstage passes to a TAFKAL80ETC concert'){
+                $item->quality = $this->backStagePassQualitty($item);
+                $item->sellIn = $item->sellIn - 1;
+                continue;
             }
+            
+            $item->quality = max(0, min(self::MAX_QUALITY, $item->quality - ($expired ? 2 : 1)));
+            $item->sellIn--;
+            
         }
+    }
+    
+    private function backStagePassQualitty(Item $item)
+    {
+        return match (true) {
+            $item->sellIn <= 0 => 0,
+            $item->sellIn <= 5 => min(self::MAX_QUALITY, $item->quality + 3),
+            $item->sellIn <= 10 => min(self::MAX_QUALITY, $item->quality + 2),
+            default => min(self::MAX_QUALITY, $item->quality + 1),
+        };
     }
 }
